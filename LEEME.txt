@@ -1,0 +1,13 @@
+SMOKEHOUSE CONTROL - PWA v1
+
+Archivos: index.html, manifest.webmanifest, icon.svg, sw.js.
+
+Para instalarla en Samsung S25:
+1. Subir los cuatro archivos a una carpeta de un alojamiento web HTTPS.
+2. Abrir la URL de index.html en Chrome del telefono.
+3. Menu de Chrome (tres puntos) > Anadir a pantalla de inicio > Instalar (si esta disponible).
+4. Abrir el icono una vez con internet para asegurar la instalacion del modo sin conexion.
+
+La app no requiere backend ni guarda horarios en servidor. Los horarios permanecen solo en la memoria de cada ventana abierta. Al cerrar o recargar se borran. El modo PWA instalado puede reusar una ventana existente al abrir su icono; el aislamiento entre instancias depende de como Android abra las ventanas.
+
+Para usar sin servidor en pruebas, abrir index.html como archivo local; el calculo funciona, pero la instalacion PWA y el service worker offline requieren HTTPS (o localhost).
