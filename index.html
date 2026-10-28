@@ -7,7 +7,7 @@
 .check input{width:18px;height:18px;min-height:18px;accent-color:#39ff14}
 .color-note{border-left:3px solid #ffd166;background:#3d321d;padding:10px 12px;border-radius:6px;font-weight:700;margin:10px 0}
 
-</style></head><body><main><header><div class="logo">♨️</div><div><h1>Smokehouse Control</h1><div class="sub" style="margin:3px 0 0">Control personal de horarios</div><div class="operator">Smokehouse Operator · Dayron Rosales</div></div><div id="clock"></div></header><p>Toca una tarjeta para abrirla. Las otras se pliegan automáticamente y sus horarios se conservan.</p><div id="cards"></div><div class="actions"><button id="clear">Borrar todos los horarios</button></div><div class="note">Versión 8. Los horarios se guardan automáticamente en este dispositivo y se recuperan al recargar o reabrir la aplicación. En otro dispositivo no se sincronizan. Usa «Borrar todos los horarios» cuando termines. Sin alarmas ni notificaciones.</div><div class="note foot">Los tiempos son referencias estimadas. Batch: apertura prevista +5 h 30 min desde la hora de inicio que escribas (sin sumar 4 minutos automáticamente). Blast: temperatura +4 h y retirada +4 h 40 min desde la apertura de puertas. Continuous: QA +4 h desde la entrada de la primera carne al Blast. Son horarios orientativos, no mediciones de temperatura ni sustitutos de los procedimientos y registros oficiales de Tyson.</div></main><script>
+</style></head><body><main><header><div class="logo">♨️</div><div><h1>Smokehouse Control</h1><div class="sub" style="margin:3px 0 0">Control personal de horarios</div><div class="operator">Smokehouse Operator · Dayron Rosales</div></div><div id="clock"></div></header><p>Toca una tarjeta para abrirla. Las otras se pliegan automáticamente y sus horarios se conservan.</p><div id="cards"></div><div class="actions"><button id="clear">Borrar todos los horarios</button></div><div class="note">Versión 9. Los horarios se guardan automáticamente en este dispositivo y se recuperan al recargar o reabrir la aplicación. En otro dispositivo no se sincronizan. Usa «Borrar todos los horarios» cuando termines. Sin alarmas ni notificaciones.</div><div class="note foot">Los tiempos son referencias estimadas. Batch: apertura prevista +5 h 30 min desde la hora de inicio que escribas (sin sumar 4 minutos automáticamente). Blast: temperatura +4 h y retirada +5 h desde la apertura de puertas. Continuous: QA +4 h desde la entrada de la primera carne al Blast. Son horarios orientativos, no mediciones de temperatura ni sustitutos de los procedimientos y registros oficiales de Tyson.</div></main><script>
 'use strict';
 
 const defs=[
@@ -86,7 +86,7 @@ function render(){
  // If no Blast opening is entered, use the oven's predicted opening.
  // Once a Blast opening is entered, it stays independent of later oven changes.
  const base=blast|| (oven?new Date(oven.getTime()+330*60000):null);
- draw(id,1,base,240,now);draw(id,2,base,280,now);
+ draw(id,1,base,240,now);draw(id,2,base,300,now);
  document.getElementById(id+'-color').hidden=!s.first;
  }
 }
