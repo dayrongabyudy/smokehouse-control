@@ -5,9 +5,9 @@
 .inputs+.section-label{border-top:1px solid #26354b;padding-top:15px}
 .check{display:flex;gap:8px;align-items:center;font-size:13px;color:#eaf0fa;margin:12px 0}
 .check input{width:18px;height:18px;min-height:18px;accent-color:#39ff14}
-.color-note{border-left:3px solid #ffd166;background:#3d321d;padding:10px 12px;border-radius:6px;font-weight:700;margin:10px 0}
+.military{font-size:12px;color:#8bcaff;font-weight:650;letter-spacing:0;white-space:nowrap;margin-left:8px;vertical-align:middle}.input-military{font-size:11px;color:#8bcaff;min-height:15px;margin-top:4px}.uncured-area{margin-top:16px;padding:12px;border:1px solid #405575;background:#18283e;border-radius:13px}.uncured-area[hidden]{display:none}.uncured-toggle{margin-top:18px;padding:11px;border:1px solid #466587;border-radius:12px;background:#1b2e45}.uncured-title{font-size:14px;font-weight:800;color:#b8ddff}.uncured-info{font-size:12px;color:#a8b7cc;line-height:1.5}.uncured-done{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:12px;color:#cfe3f6}.uncured-done input{width:17px;height:17px;min-height:17px;accent-color:#39ff14}.color-note{border-left:3px solid #ffd166;background:#3d321d;padding:10px 12px;border-radius:6px;font-weight:700;margin:10px 0}
 
-</style></head><body><main><header><div class="logo">♨️</div><div><h1>Smokehouse Control</h1><div class="sub" style="margin:3px 0 0">Control personal de horarios</div><div class="operator">Smokehouse Operator · Dayron Rosales</div></div><div id="clock"></div></header><p>Toca una tarjeta para abrirla. Las otras se pliegan automáticamente y sus horarios se conservan.</p><div id="cards"></div><div class="actions"><button id="clear">Borrar todos los horarios</button></div><div class="note">Versión 9. Los horarios se guardan automáticamente en este dispositivo y se recuperan al recargar o reabrir la aplicación. En otro dispositivo no se sincronizan. Usa «Borrar todos los horarios» cuando termines. Sin alarmas ni notificaciones.</div><div class="note foot">Los tiempos son referencias estimadas. Batch: apertura prevista +5 h 30 min desde la hora de inicio que escribas (sin sumar 4 minutos automáticamente). Blast: temperatura +4 h y retirada +5 h desde la apertura de puertas. Continuous: QA +4 h desde la entrada de la primera carne al Blast. Son horarios orientativos, no mediciones de temperatura ni sustitutos de los procedimientos y registros oficiales de Tyson.</div></main><script>
+</style></head><body><main><header><div class="logo">♨️</div><div><h1>Smokehouse Control</h1><div class="sub" style="margin:3px 0 0">Control personal de horarios</div><div class="operator">Smokehouse Operator · Dayron Rosales</div></div><div id="clock"></div></header><p>Toca una tarjeta para abrirla. Las otras se pliegan automáticamente y sus horarios se conservan.</p><div id="cards"></div><div class="actions"><button id="clear">Borrar todos los horarios</button></div><div class="note">Versión 10. Los horarios se guardan automáticamente en este dispositivo y se recuperan al recargar o reabrir la aplicación. En otro dispositivo no se sincronizan. Usa «Borrar todos los horarios» cuando termines. Sin alarmas ni notificaciones.</div><div class="note foot">UNCURED: dos tomas, +1 h 45 min y +4 h 45 min desde apertura de puertas (Batch) o salida de carne (Continuous). Los tiempos son referencias estimadas. Batch: apertura prevista +5 h 30 min desde la hora de inicio que escribas (sin sumar 4 minutos automáticamente). Blast: temperatura +4 h y retirada +5 h desde la apertura de puertas. Continuous: QA +4 h desde la entrada de la primera carne al Blast. Son horarios orientativos, no mediciones de temperatura ni sustitutos de los procedimientos y registros oficiales de Tyson.</div></main><script>
 'use strict';
 
 const defs=[
@@ -24,32 +24,36 @@ const state={};
 const cards=document.getElementById('cards');
 const pad=n=>String(n).padStart(2,'0');
 const fmt=d=>d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+const military=d=>pad(d.getHours())+':'+pad(d.getMinutes());
+const dual=d=>fmt(d)+' <span class="military">'+military(d)+'</span>'; 
 const datefmt=d=>d.toLocaleDateString('es-US',{day:'numeric',month:'short'});
 const save=()=>{try{localStorage.setItem(key,JSON.stringify(state))}catch(e){}};
-const inputPair=(id,prefix,label)=>`<div class="inputs"><div><label for="${id}-${prefix}-date">Fecha</label><input type="date" id="${id}-${prefix}-date"></div><div><label for="${id}-${prefix}-time">${label}</label><input type="time" step="60" id="${id}-${prefix}-time"></div></div>`;
+const inputPair=(id,prefix,label)=>`<div class="inputs"><div><label for="${id}-${prefix}-date">Fecha</label><input type="date" id="${id}-${prefix}-date"></div><div><label for="${id}-${prefix}-time">${label}</label><input type="time" step="60" id="${id}-${prefix}-time"><div class="input-military" id="${id}-${prefix}-military"></div></div></div>`;
 const task=(id,i,name)=>`<div class="task"><div class="taskhead"><span class="taskname">${name}</span><span class="status" id="${id}-status-${i}">Pendiente</span></div><div class="time" id="${id}-target-${i}">--:--</div><div class="detail" id="${id}-date-${i}">Introduce fecha y hora</div><div class="track" role="progressbar" aria-label="Tiempo restante para ${name}"><div class="fill" id="${id}-bar-${i}"></div></div><div class="remaining" id="${id}-left-${i}">Sin calcular</div></div>`;
+const uncuredMarkup=(id,batch)=>`<div class="uncured-toggle"><label class="check" style="margin:0"><input type="checkbox" id="${id}-uncured"> <span class="uncured-title">UNCURED · Activar controles</span></label></div><div class="uncured-area" id="${id}-uncured-area" hidden><div class="uncured-info">${batch?'Referencia: apertura de puertas de esta carne. Si escribes una apertura en Blast, se utiliza esa hora; de lo contrario, la apertura prevista del horno.':'Referencia: hora de salida de la carne del Continuous.'}</div>${batch?'':inputPair(id,'exit','Salida de carne del Continuous')}${task(id,3,'UNCURED · Primera temperatura (+1 h 45 min)')}<label class="uncured-done"><input type="checkbox" id="${id}-done1"> Primera toma realizada</label>${task(id,4,'UNCURED · Segunda temperatura (+3 h después)')}<label class="uncured-done"><input type="checkbox" id="${id}-done2"> Segunda toma realizada</label></div>`;
 for(const def of defs){
  const id=def.id,batch=id!=='continuous';
  const sec=document.createElement('details');sec.className='card';
  sec.innerHTML=`<summary><div class="heading"><h2>${def.title}</h2><div class="sub">${def.sub}</div></div><span class="chevron" aria-hidden="true">⌄</span></summary><div class="card-body">${
  batch?`<div class="section-label">Horno · Tanda actual</div>${inputPair(id,'oven','Inicio del horno')}${task(id,0,'Abrir puertas (previsto)')}
  <div class="section-label">Blast · Carne anterior o actual</div><p class="hint">Escribe la apertura de puertas de la carne que está en el Blast. Este horario es independiente del horno: puedes iniciar otra tanda sin perderlo.</p>${inputPair(id,'blast','Apertura de puertas')}<button type="button" class="clear-blast" id="${id}-clear-blast" hidden>Limpiar Blast</button>${task(id,1,'Temperatura en Blast')}${task(id,2,'Sacar carne del Blast')}
- <label class="check"><input type="checkbox" id="${id}-first"> Primera carne de la tanda</label><div id="${id}-color" class="color-note" hidden>Verificar color de la carne</div>`
- :`${inputPair(id,'oven','Entrada al Blast')}${task(id,0,'Ir con QA · Temperatura')}`
+ <label class="check"><input type="checkbox" id="${id}-first"> Primera carne de la tanda</label><div id="${id}-color" class="color-note" hidden>Verificar color de la carne</div>${uncuredMarkup(id,true)}`
+ :`${inputPair(id,'oven','Entrada al Blast')}${task(id,0,'Ir con QA · Temperatura')}${uncuredMarkup(id,false)}`
  }</div>`;
  cards.appendChild(sec);
  sec.addEventListener('toggle',()=>{if(sec.open)for(const other of cards.querySelectorAll('details.card'))if(other!==sec)other.open=false});
  const prev=saved[id]||{};
- state[id]={ovenDate:prev.ovenDate??prev.date??'',ovenTime:prev.ovenTime??prev.time??'',blastDate:prev.blastDate||'',blastTime:prev.blastTime||'',first:!!prev.first};
- for(const field of ['ovenDate','ovenTime',...(batch?['blastDate','blastTime']:[])]){
-   const prefix=field.startsWith('oven')?'oven':'blast',type=field.endsWith('Date')?'date':'time';
+ state[id]={ovenDate:prev.ovenDate??prev.date??'',ovenTime:prev.ovenTime??prev.time??'',blastDate:prev.blastDate||'',blastTime:prev.blastTime||'',first:!!prev.first,uncured:!!prev.uncured,done1:!!prev.done1,done2:!!prev.done2,exitDate:prev.exitDate||'',exitTime:prev.exitTime||''};
+ for(const field of ['ovenDate','ovenTime',...(batch?['blastDate','blastTime']:['exitDate','exitTime'])]){
+   const prefix=field.startsWith('oven')?'oven':field.startsWith('exit')?'exit':'blast',type=field.endsWith('Date')?'date':'time';
    const el=document.getElementById(`${id}-${prefix}-${type}`);
    el.value=state[id][field];
-   el.addEventListener('input',()=>{state[id][field]=el.value;save();render()});
+   el.addEventListener('input',()=>{state[id][field]=el.value;if(field==='blastDate'||field==='blastTime'||field==='exitDate'||field==='exitTime'){state[id].done1=false;state[id].done2=false;document.getElementById(id+'-done1').checked=false;document.getElementById(id+'-done2').checked=false;}save();render()});
  }
+ for(const field of ['uncured','done1','done2']){const cb=document.getElementById(id+'-'+field);cb.checked=state[id][field];cb.addEventListener('change',()=>{state[id][field]=cb.checked;save();render()})}
  if(batch){
    document.getElementById(id+'-clear-blast').addEventListener('click',()=>{
-     state[id].blastDate='';state[id].blastTime='';
+     state[id].blastDate='';state[id].blastTime='';state[id].done1=false;state[id].done2=false;document.getElementById(id+'-done1').checked=false;document.getElementById(id+'-done2').checked=false;
      document.getElementById(id+'-blast-date').value='';
      document.getElementById(id+'-blast-time').value='';
      save();render();
@@ -69,32 +73,39 @@ function draw(id,i,start,offset,now){
  const target=document.getElementById(`${id}-target-${i}`),dt=document.getElementById(`${id}-date-${i}`),bar=document.getElementById(`${id}-bar-${i}`),left=document.getElementById(`${id}-left-${i}`),status=document.getElementById(`${id}-status-${i}`);
  if(!start){target.textContent='--:--';dt.textContent='Introduce fecha y hora';bar.style.width='0%';bar.className='fill';bar.parentElement.classList.remove('done');left.textContent='Sin calcular';status.textContent='Pendiente';status.className='status';return}
  const end=new Date(start.getTime()+offset*60000),diff=end-now,remaining=Math.max(0,Math.ceil(diff/60000));
- target.textContent=fmt(end);dt.textContent=datefmt(end)+(end.toDateString()!==start.toDateString()?' · otro día':'');
+ target.innerHTML=dual(end);dt.textContent=datefmt(end)+(end.toDateString()!==start.toDateString()?' · otro día':'');
  const pct=Math.max(0,Math.min(100,100*diff/(offset*60000)));
  bar.style.width=pct+'%';bar.parentElement.classList.toggle('done',diff<=0);
  if(diff<=0){bar.style.backgroundColor='#ff172c';bar.className='fill done';left.textContent='Hora alcanzada';status.textContent='Hora cumplida';status.className='status ready'}
  else{const hours=Math.floor(remaining/60),mins=remaining%60;left.textContent=`Faltan ${hours} h ${pad(mins)} min`;const used=1-pct/100;const hue=used<0.5?110-used*2*65:45-(used-0.5)*2*45;bar.style.backgroundColor=`hsl(${Math.max(0,hue)} 100% 52%)`;bar.className='fill';status.textContent=now<start?'Programado':remaining<=30?'Próximo':'En curso';status.className='status'+(remaining<=30?' soon':'')}
 }
 function render(){
- const now=new Date();document.getElementById('clock').textContent=fmt(now);
+ const now=new Date();document.getElementById('clock').textContent=fmt(now)+' / '+military(now);
  for(const def of defs){
  const id=def.id,s=state[id],oven=parse(s.ovenDate,s.ovenTime);
- if(id==='continuous'){draw(id,0,oven,240,now);continue}
+ for(const prefix of ['oven',...(id==='continuous'?['exit']:['blast'])]){const d=parse(s[prefix+'Date'],s[prefix+'Time']);document.getElementById(id+'-'+prefix+'-military').textContent=d?'Militar: '+military(d):''}
+ document.getElementById(id+'-uncured-area').hidden=!s.uncured;
+ if(id==='continuous'){draw(id,0,oven,240,now);const exit=parse(s.exitDate,s.exitTime);drawUncured(id,s,exit,now);continue}
  const blast=parse(s.blastDate,s.blastTime);
  document.getElementById(id+'-clear-blast').hidden=!(s.blastDate||s.blastTime);
  draw(id,0,oven,330,now);
  // If no Blast opening is entered, use the oven's predicted opening.
  // Once a Blast opening is entered, it stays independent of later oven changes.
  const base=blast|| (oven?new Date(oven.getTime()+330*60000):null);
- draw(id,1,base,240,now);draw(id,2,base,300,now);
+ draw(id,1,base,240,now);draw(id,2,base,300,now);drawUncured(id,s,base,now);
  document.getElementById(id+'-color').hidden=!s.first;
  }
 }
+function drawUncured(id,s,base,now){
+ if(!s.uncured)return;
+ draw(id,3,base,105,now);draw(id,4,base,285,now);
+ for(const i of [1,2]){const done=s['done'+i];const el=document.getElementById(id+'-status-'+(i+2));if(done){el.textContent='Realizada';el.className='status ready'}}
+}
 document.getElementById('clear').addEventListener('click',()=>{
  if(!confirm('¿Borrar todos los horarios de este dispositivo?'))return;
- for(const def of defs){const s=state[def.id];for(const f of ['ovenDate','ovenTime','blastDate','blastTime'])s[f]='';s.first=false;
- for(const prefix of ['oven',...(def.id==='continuous'?[]:['blast'])])for(const type of ['date','time'])document.getElementById(`${def.id}-${prefix}-${type}`).value='';
- if(def.id!=='continuous')document.getElementById(def.id+'-first').checked=false;
+ for(const def of defs){const s=state[def.id];for(const f of ['ovenDate','ovenTime','blastDate','blastTime','exitDate','exitTime'])s[f]='';s.first=false;s.uncured=false;s.done1=false;s.done2=false;
+ for(const prefix of ['oven',...(def.id==='continuous'?['exit']:['blast'])])for(const type of ['date','time'])document.getElementById(`${def.id}-${prefix}-${type}`).value='';
+ if(def.id!=='continuous')document.getElementById(def.id+'-first').checked=false;for(const f of ['uncured','done1','done2'])document.getElementById(def.id+'-'+f).checked=false;
  }
  save();render();
 });
